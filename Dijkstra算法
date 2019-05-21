@@ -1,0 +1,311 @@
+首先我们分析下Dijkstra算法的步骤：
+
+有集合M={V0,V1,V2,V3,V4}这样5个元素，我们用
+
+TempVertex表示该顶点是否使用。
+
+Weight表示该Path的权重(默认都为MaxValue)。
+
+Path表示该顶点的总权重。
+
+①. 从集合M中挑选顶点V0为起始点。给V0的所有邻接点赋值，要赋值的前提是要赋值的weight要小于原始的weight，并且排除已经访问过
+
+     的顶点，然后挑选当前最小的weight作为下一次贪心搜索的起点，就这样V0V1为挑选为最短路径，如图2。
+
+②. 我们继续从V1这个顶点开始给邻接点以同样的方式赋值，最后我们发现V0V4为最短路径。也就是图3。
+
+。。。
+
+③. 最后所有顶点的最短路径就这样求出来了 。
+#region Dijkstra算法
+        /// <summary>
+        /// Dijkstra算法
+        /// </summary>
+        public Dictionary<int, Edge> Dijkstra()
+        {
+            //收集顶点的相邻边
+            Dictionary<int, Edge> dic_edges = new Dictionary<int, Edge>();
+
+            //weight=MaxValue:标识没有边
+            for (int i = 0; i < graph.vertexsNum; i++)
+            {
+                //起始边
+                var startEdge = i;
+
+                dic_edges.Add(startEdge, new Edge() { weight = int.MaxValue });
+            }
+
+            //取第一个顶点
+            var start = 0;
+
+            for (int i = 0; i < graph.vertexsNum; i++)
+            {
+                //标记该顶点已经使用过
+                dic_edges[start].isUse = true;
+
+                for (int j = 1; j < graph.vertexsNum; j++)
+                {
+                    var end = j;
+
+                    //取到相邻边的权重
+                    var weight = graph.edges[start, end];
+
+                    //赋较小的权重
+                    if (weight < dic_edges[end].weight)
+                    {
+                        //与上一个顶点的权值累加
+                        var totalweight = dic_edges[start].weight == int.MaxValue ? weight : dic_edges[start].weight + weight;
+
+                        if (totalweight < dic_edges[end].weight)
+                        {
+                            //将该顶点的相邻边加入到集合中
+                            dic_edges[end] = new Edge()
+                            {
+                                startEdge = start,
+                                endEdge = end,
+                                weight = totalweight
+                            };
+
+                            //将上一个边的节点的vertex累加
+                            dic_edges[end].vertexs = new HashSet<int>(dic_edges[start].vertexs);
+
+                            dic_edges[end].vertexs.Add(start);
+                            dic_edges[end].vertexs.Add(end);
+                        }
+                    }
+                }
+
+                var min = int.MaxValue;
+
+                //下一个进行比较的顶点
+                int minkey = 0;
+
+                //取start邻接边中的最小值
+                foreach (var key in dic_edges.Keys)
+                {
+                    //取当前 最小的 key(使用过的除外)
+                    if (min > dic_edges[key].weight && !dic_edges[key].isUse)
+                    {
+                        min = dic_edges[key].weight;
+                        minkey = key;
+                    }
+                }
+
+                //从邻接边的顶点再开始找
+                start = minkey;
+            }
+
+            return dic_edges;
+        }
+        #endregion
+        using System;
+using System.Collections.Generic;
+using System.Linq;
+using System.Text;
+using System.Diagnostics;
+using System.Threading;
+using System.IO;
+using System.Threading.Tasks;
+ 
+namespace ConsoleApplication2
+{
+    public class Program
+    {
+        public static void Main()
+        {
+            Dictionary<int, string> dic = new Dictionary<int, string>();
+ 
+            MatrixGraph graph = new MatrixGraph();
+ 
+            graph.Build();
+ 
+            var result = graph.Dijkstra();
+ 
+            Console.WriteLine("各节点的最短路径为:");
+ 
+            foreach (var key in result.Keys)
+            {
+                Console.WriteLine("{0}", string.Join("->", result[key].vertexs));
+            }
+ 
+            Console.Read();
+        }
+    }
+ 
+    #region 定义矩阵节点
+    /// <summary>
+    /// 定义矩阵节点
+    /// </summary>
+    public class MatrixGraph
+    {
+        Graph graph = new Graph();
+ 
+        public class Graph
+        {
+            /// <summary>
+            /// 顶点信息
+            /// </summary>
+            public int[] vertexs;
+ 
+            /// <summary>
+            /// 边的条数
+            /// </summary>
+            public int[,] edges;
+ 
+            /// <summary>
+            /// 顶点个数
+            /// </summary>
+            public int vertexsNum;
+ 
+            /// <summary>
+            /// 边的个数
+            /// </summary>
+            public int edgesNum;
+        }
+ 
+        #region 矩阵的构建
+        /// <summary>
+        /// 矩阵的构建
+        /// </summary>
+        public void Build()
+        {
+            //顶点数
+            graph.vertexsNum = 5;
+ 
+            //边数
+            graph.edgesNum = 6;
+ 
+            graph.vertexs = new int[graph.vertexsNum];
+ 
+            graph.edges = new int[graph.vertexsNum, graph.vertexsNum];
+ 
+            //构建二维数组
+            for (int i = 0; i < graph.vertexsNum; i++)
+            {
+                //顶点
+                graph.vertexs[i] = i;
+ 
+                for (int j = 0; j < graph.vertexsNum; j++)
+                {
+                    graph.edges[i, j] = int.MaxValue;
+                }
+            }
+ 
+            //定义 6 条边
+            graph.edges[0, 1] = graph.edges[1, 0] = 2;
+            graph.edges[0, 2] = graph.edges[2, 0] = 5;
+            graph.edges[0, 4] = graph.edges[4, 0] = 3;
+            graph.edges[1, 3] = graph.edges[3, 1] = 4;
+            graph.edges[2, 4] = graph.edges[4, 2] = 5;
+            graph.edges[3, 4] = graph.edges[4, 3] = 2;
+ 
+        }
+        #endregion
+ 
+        #region 边的信息
+        /// <summary>
+        /// 边的信息
+        /// </summary>
+        public class Edge
+        {
+            //开始边
+            public int startEdge;
+ 
+            //结束边
+            public int endEdge;
+ 
+            //权重
+            public int weight;
+ 
+            //是否使用
+            public bool isUse;
+ 
+            //累计顶点
+            public HashSet<int> vertexs = new HashSet<int>();
+        }
+        #endregion
+ 
+        #region Dijkstra算法
+        /// <summary>
+        /// Dijkstra算法
+        /// </summary>
+        public Dictionary<int, Edge> Dijkstra()
+        {
+            //收集顶点的相邻边
+            Dictionary<int, Edge> dic_edges = new Dictionary<int, Edge>();
+ 
+            //weight=MaxValue:标识没有边
+            for (int i = 0; i < graph.vertexsNum; i++)
+            {
+                //起始边
+                var startEdge = i;
+ 
+                dic_edges.Add(startEdge, new Edge() { weight = int.MaxValue });
+            }
+ 
+            //取第一个顶点
+            var start = 0;
+ 
+            for (int i = 0; i < graph.vertexsNum; i++)
+            {
+                //标记该顶点已经使用过
+                dic_edges[start].isUse = true;
+ 
+                for (int j = 1; j < graph.vertexsNum; j++)
+                {
+                    var end = j;
+ 
+                    //取到相邻边的权重
+                    var weight = graph.edges[start, end];
+ 
+                    //赋较小的权重
+                    if (weight < dic_edges[end].weight)
+                    {
+                        //与上一个顶点的权值累加
+                        var totalweight = dic_edges[start].weight == int.MaxValue ? weight : dic_edges[start].weight + weight;
+ 
+                        if (totalweight < dic_edges[end].weight)
+                        {
+                            //将该顶点的相邻边加入到集合中
+                            dic_edges[end] = new Edge()
+                            {
+                                startEdge = start,
+                                endEdge = end,
+                                weight = totalweight
+                            };
+ 
+                            //将上一个边的节点的vertex累加
+                            dic_edges[end].vertexs = new HashSet<int>(dic_edges[start].vertexs);
+ 
+                            dic_edges[end].vertexs.Add(start);
+                            dic_edges[end].vertexs.Add(end);
+                        }
+                    }
+                }
+ 
+                var min = int.MaxValue;
+ 
+                //下一个进行比较的顶点
+                int minkey = 0;
+ 
+                //取start邻接边中的最小值
+                foreach (var key in dic_edges.Keys)
+                {
+                    //取当前 最小的 key(使用过的除外)
+                    if (min > dic_edges[key].weight && !dic_edges[key].isUse)
+                    {
+                        min = dic_edges[key].weight;
+                        minkey = key;
+                    }
+                }
+ 
+                //从邻接边的顶点再开始找
+                start = minkey;
+            }
+ 
+            return dic_edges;
+        }
+        #endregion
+    }
+    #endregion
+}
