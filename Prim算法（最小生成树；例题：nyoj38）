@@ -1,0 +1,122 @@
+布线问题
+时间限制：1000 ms  |  内存限制：65535 KB
+难度：4
+描述
+南阳理工学院要进行用电线路改造，现在校长要求设计师设计出一种布线方式，该布线方式需要满足以下条件：
+1、把所有的楼都供上电。
+2、所用电线花费最少
+输入
+第一行是一个整数n表示有n组测试数据。(n<5)
+每组测试数据的第一行是两个整数v,e.
+v表示学校里楼的总个数(v<=500)
+随后的e行里，每行有三个整数a,b,c表示a与b之间如果建铺设线路花费为c(c<=100)。（哪两栋楼间如果没有指明花费，则表示这两栋楼直接连通需要费用太大或者不可能连通）
+随后的1行里，有v个整数,其中第i个数表示从第i号楼接线到外界供电设施所需要的费用。( 0<e<v*(v-1)/2 )
+（楼的编号从1开始），由于安全问题，只能选择一个楼连接到外界供电设备。
+数据保证至少存在一种方案满足要求。
+输出
+每组测试数据输出一个正整数,表示铺设满足校长要求的线路的最小花费。
+--------------------- 
+作者：Radium_1209 
+来源：CSDN 
+原文：https://blog.csdn.net/Radium_1209/article/details/80561435 
+版权声明：本文为博主原创文章，转载请附上博文链接！
+#include <cstdio>
+#include <iostream>
+#include <cstring>
+#include <algorithm>
+using namespace std;
+const int MAX=505,inf=0x3f3f3f3f;  
+int map[MAX][MAX],lowcost[MAX],cost[MAX],vis[MAX];
+int v,e,ans,t,a,b,c;
+ 
+void prim()
+{
+	ans=0; lowcost[1]=0; vis[1]=1;
+	for(int i=2;i<=v;i++) //默认从第一个点出发 
+		lowcost[i]=map[1][i]; //到点i的最小花费初始化为从第一点出发 
+	for (int i=2;i<=v;i++)
+	{
+		int minx=inf,pos;
+		for (int j=1;j<=v;j++)  
+		{
+			if (!vis[j]&&lowcost[j]<minx) //查找最小花费的点 
+			{
+				minx=lowcost[j];
+				pos=j; //标记位置 
+			}
+		}
+		vis[pos]=1;
+		ans+=minx;
+		for (int j=1;j<=v;j++)
+		{ 
+			if (!vis[j]&&map[pos][j]<lowcost[j])
+				lowcost[j]=map[pos][j]; //更新到每个点的最小花费
+		}
+	}  
+}
+ 
+int main()
+{
+	cin >> t;
+	while(t--)
+	{
+		memset(map,inf,sizeof(map)); //初始化map为最大值 
+		memset(lowcost,0,sizeof(lowcost));
+		memset(vis,0,sizeof(vis));
+		scanf("%d%d",&v,&e);
+		for (int i=1;i<=e;i++)
+		{
+			scanf("%d%d%d",&a,&b,&c);
+			map[a][b]=map[b][a]=c; 
+		}
+		for (int i=1;i<=v;i++)
+			scanf("%d",&cost[i]);  
+		sort(cost+1,cost+v+1); //排序选择连接到外界的点 
+		prim(); //求最短路
+		printf("%d\n",ans+cost[1]);
+	}
+	return 0;
+}
+
+核心代码：
+
+1.默认从第一点开始初始化
+
+2.找最小权的点，并更新到其他点的权（重复v-1次）
+
+void prim()
+{
+	//第一部分初始化 
+	ans=0; lowcost[1]=0; vis[1]=1;
+	for(int i=2;i<=v;i++) //默认从第一个点出发 
+		lowcost[i]=map[1][i]; //到点i的最小花费初始化为从第一点出发 
+	
+	//第二部分找最小权的点 
+	for (int i=2;i<=v;i++)
+	{
+		int minx=inf,pos;
+		for (int j=1;j<=v;j++)  
+		{
+			if (!vis[j]&&lowcost[j]<minx) //查找最小花费的点 
+			{
+				minx=lowcost[j];
+				pos=j; //标记位置 
+			}
+		}
+		vis[pos]=1; //标记已访问 
+		ans+=minx; //更新答案
+		
+		//更新访问后到各点的权 
+		for (int j=1;j<=v;j++)
+		{ 
+			if (!vis[j]&&map[pos][j]<lowcost[j])
+				lowcost[j]=map[pos][j]; //更新到每个点的最小花费
+		}
+	}  
+}
+
+--------------------- 
+作者：Radium_1209 
+来源：CSDN 
+原文：https://blog.csdn.net/Radium_1209/article/details/80561435 
+版权声明：本文为博主原创文章，转载请附上博文链接！
